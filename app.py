@@ -7,7 +7,6 @@ import gzip
 
 
 @st.cache_data(show_spinner=False)
-@st.cache_data(show_spinner=False)
 def fetch_poster(movie_id, delay=1):
     api_key = "52317e033dc3b1e931c65a266102c32c"
     api_url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key=52317e033dc3b1e931c65a266102c32c&language=en-US"
