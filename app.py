@@ -3,6 +3,8 @@ import pickle
 import pandas as pd
 import requests
 import random
+import gzip
+
 
 @st.cache_data(show_spinner=False)
 @st.cache_data(show_spinner=False)
@@ -44,7 +46,8 @@ def recommend(movie):
 movies_dict = pickle.load(open('./movie_dict.pkl','rb'))
 movies = pd.DataFrame(movies_dict)
 
-similarity = pickle.load(open('./similarity.pkl','rb'))
+with gzip.open('./similarity_compressed.pkl.gz', 'rb') as f:
+  similarity = pickle.load(f)
 
 st.title('Movie Recommender System')
 
