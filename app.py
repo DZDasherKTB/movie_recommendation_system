@@ -5,28 +5,47 @@ import requests
 import random
 import gzip
 
+st.set_page_config(page_title="Movie Recommender", layout="wide")
 
+# ======= CSS Styling for Responsiveness & Cards =======
+st.markdown("""
+<style>
+/* Center title */
+h1 {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+/* Movie card hover effect */
+.movie-card {
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+.movie-card:hover {
+    transform: scale(1.03);
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ======= Poster Fetching =======
 @st.cache_data(show_spinner=False)
-def fetch_poster(movie_id, delay=1):
+def fetch_poster(movie_id):
     api_key = "52317e033dc3b1e931c65a266102c32c"
-    api_url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key=52317e033dc3b1e931c65a266102c32c&language=en-US"
+    api_url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={api_key}&language=en-US"
     
     try:
         response = requests.get(api_url, timeout=5)
         response.raise_for_status()
         data = response.json()
-        print(data)
         poster_path = data.get('poster_path')
         if poster_path:
-            image_url = f"https://image.tmdb.org/t/p/w185{poster_path}"
-            return image_url
+            return f"https://image.tmdb.org/t/p/w185{poster_path}"  # ✅ your original size
     except Exception as e:
         print(f"failed → {e}")
 
-    # If all retries failed:
-    fallback_url = "https://placehold.co/500x750?text=No+Poster"
-    return fallback_url
+    return "https://placehold.co/500x750?text=No+Poster"
 
+# ======= Recommend Logic =======
 def recommend(movie):
     movie_index = movies[movies['title'] == movie].index[0]
     distances = similarity[movie_index]
@@ -42,31 +61,34 @@ def recommend(movie):
     
     return recommended_movies, recommended_movies_posters
 
+# ======= Load Data =======
 movies_dict = pickle.load(open('./movie_dict.pkl','rb'))
 movies = pd.DataFrame(movies_dict)
-
 with gzip.open('./similarity_compressed.pkl.gz', 'rb') as f:
-  similarity = pickle.load(f)
+    similarity = pickle.load(f)
 
-st.title('Movie Recommender System')
+# ======= UI =======
+st.title("🎬 Movie Recommender System")
 
-selected_movie_name = st.selectbox('Select a Movie',movies['title'].values)
+selected_movie_name = st.selectbox("Select a movie to get recommendations", movies['title'].values)
 
-if st.button('Recommend'):
-  recommended_movie_names,recommended_movie_posters = recommend(selected_movie_name)
-  col1, col2, col3, col4, col5 = st.columns(5)
-  with col1:
-    st.text(recommended_movie_names[0])
-    st.image(recommended_movie_posters[0])
-  with col2:
-    st.text(recommended_movie_names[1])
-    st.image(recommended_movie_posters[1])
-  with col3:
-    st.text(recommended_movie_names[2])
-    st.image(recommended_movie_posters[2])
-  with col4:
-    st.text(recommended_movie_names[3])
-    st.image(recommended_movie_posters[3])
-  with col5:
-    st.text(recommended_movie_names[4])
-    st.image(recommended_movie_posters[4])
+if st.button('🔍 Recommend'):
+    names, posters = recommend(selected_movie_name)
+    cols = st.columns(5)
+
+    for idx, col in enumerate(cols):
+        with col:
+            st.markdown(f"""
+            <div class="movie-card">
+                <h4>{names[idx]}</h4>
+                <img src="{posters[idx]}" style="width:100%; border-radius: 10px;" />
+            </div>
+            """, unsafe_allow_html=True)
+
+# ======= Portfolio Footer =======
+st.markdown("""
+<hr style="margin-top: 4rem;"/>
+<p style="text-align:center; color: gray;">
+    💡 Created by <a href="https://portfolio-theta-seven-36.vercel.app/#contact" target="_blank" style="color: #4ade80;">Dash</a>
+</p>
+""", unsafe_allow_html=True)
